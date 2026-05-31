@@ -93,6 +93,8 @@ export function formatPublicGameEndMessages(snapshot: EndedGameSnapshot): string
 export function formatAdminGameEndMessages(snapshot: EndedGameSnapshot): string[] {
   const winnerIds = new Set(snapshot.winners.map((winner) => winner.userId));
   const nonWinningParticipants = snapshot.participants.filter((participant) => !winnerIds.has(participant.userId));
+  const winnerTitle = snapshot.game.maxWinners === 1 ? "WINNER" : "WINNERS";
+  const winnerLabel = snapshot.game.maxWinners === 1 ? "Winner" : "Winners";
   const winnerLines = snapshot.winners.length > 0
     ? snapshot.winners.map(winnerLine).join("\n")
     : "No winners recorded.";
@@ -100,22 +102,21 @@ export function formatAdminGameEndMessages(snapshot: EndedGameSnapshot): string[
   const header = [
     "\u{1F389} WORD OF THE WEEK ENDED - ADMIN RESULTS",
     "",
-    "ANSWER:",
-    snapshot.game.answer.toUpperCase(),
+    `ANSWER: ${snapshot.game.answer.toUpperCase()}`,
     "",
-    "\u{1F3C6} WINNERS",
+    `\u{1F3C6} TOP ${snapshot.game.maxWinners} ${winnerTitle}`,
     "",
     winnerLines,
     "",
     "\u{1F4CA} GAME STATS",
     "",
-    `Total Participants: ${snapshot.participants.length}`,
-    `Total Guesses: ${snapshot.totalGuesses}`,
-    `Game Duration: ${gameDuration(snapshot.game.startedAt, snapshot.game.endedAt)}`,
+    `- Total Participants: ${snapshot.participants.length}`,
+    `- Total Guesses: ${snapshot.totalGuesses}`,
+    `- Time Taken to Get ${snapshot.game.maxWinners} ${winnerLabel}: ${gameDuration(snapshot.game.startedAt, snapshot.game.endedAt)}`,
     "",
-    "\u{1F9E0} PARTICIPANTS (NON-WINNERS)",
+    "\u{1F9E0} PARTICIPANTS (NON WINNERS)",
     ""
   ].join("\n");
 
-  return chunkParticipantList(header, nonWinningParticipants, "\u{1F9E0} PARTICIPANTS (NON-WINNERS, continued)");
+  return chunkParticipantList(header, nonWinningParticipants, "\u{1F9E0} PARTICIPANTS (NON WINNERS, continued)");
 }
