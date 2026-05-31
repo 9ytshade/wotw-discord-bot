@@ -1,7 +1,7 @@
 import type { Client, Message } from "discord.js";
 import { config } from "../config/config";
 import type { CommandContext } from "../types";
-import { isSendableTextChannel, sendGameEndMessages } from "../utils/sendGameEndMessages";
+import { isSendableTextChannel, sendGameEndReports } from "../utils/sendGameEndMessages";
 
 export function registerMessageCreateEvent(client: Client, context: CommandContext): void {
   client.on("messageCreate", async (message: Message) => {
@@ -12,7 +12,7 @@ export function registerMessageCreateEvent(client: Client, context: CommandConte
     try {
       const result = await context.gameService.processGuess(message);
       if (result?.ended && result.snapshot && isSendableTextChannel(message.channel)) {
-        await sendGameEndMessages(message.channel, result.snapshot);
+        await sendGameEndReports(client, result.snapshot, message.channel);
       }
     } catch (error) {
       console.error("Failed to process WOTW guess:", error);

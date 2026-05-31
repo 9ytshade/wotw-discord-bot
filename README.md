@@ -10,7 +10,8 @@ A TypeScript Discord bot for silent Word of the Week games. It tracks all partic
 - Case-insensitive answer matching
 - Persistent Supabase Postgres tables for games, participants, winners, and guesses
 - Automatic game end when the winner limit is reached
-- Final leaderboard with winners, total participants, total guesses, and full participant list
+- Public game-end message with total guesses and the participant list
+- Private admin results with answer, winners, stats, and the non-winning participant list
 - Per-user cooldown, defaulting to 3 seconds
 - `/health` endpoint for Render web service checks
 
@@ -31,6 +32,7 @@ Prerequisite: Node.js 24 or newer.
    CLIENT_ID=
    GUILD_ID=
    WOTW_CHANNEL_ID=
+   WOTW_ADMIN_CHANNEL_ID=
    DATABASE_URL=postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres
    GUESS_COOLDOWN_SECONDS=3
    PORT=3000
@@ -94,6 +96,7 @@ This repo includes `render.yaml`, so you can deploy it as a Render web service.
    CLIENT_ID=
    GUILD_ID=
    WOTW_CHANNEL_ID=
+   WOTW_ADMIN_CHANNEL_ID=
    DATABASE_URL=
    GUESS_COOLDOWN_SECONDS=3
    ```
@@ -124,6 +127,11 @@ Optionally set a different winner limit:
 ```
 
 After the game starts, the bot does not reply to guesses, react, announce correct answers, or expose rankings. It only posts when the game ends.
+
+When the game ends:
+
+- The configured WOTW channel receives a public thank-you message, total guess count, and full participant list.
+- The configured admin-only channel receives the answer, ranked winners, game stats, and non-winning participant list.
 
 End manually:
 

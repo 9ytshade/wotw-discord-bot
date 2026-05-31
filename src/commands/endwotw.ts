@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import type { BotCommand, CommandContext } from "../types";
-import { getWotwTextChannel, sendGameEndMessages } from "../utils/sendGameEndMessages";
+import { sendGameEndReports } from "../utils/sendGameEndMessages";
 
 export const endWotwCommand: BotCommand = {
   data: new SlashCommandBuilder()
@@ -22,8 +22,7 @@ export const endWotwCommand: BotCommand = {
       return;
     }
 
-    const channel = await getWotwTextChannel(interaction.client);
-    await sendGameEndMessages(channel, snapshot);
-    await interaction.editReply(`Ended WOTW game #${snapshot.game.id} and posted the final results.`);
+    await sendGameEndReports(interaction.client, snapshot);
+    await interaction.editReply(`Ended WOTW game #${snapshot.game.id} and posted the public and admin results.`);
   }
 };

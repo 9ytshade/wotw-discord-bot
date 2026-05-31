@@ -33,6 +33,7 @@ export const config = {
   clientId: requireEnv("CLIENT_ID"),
   guildId: requireEnv("GUILD_ID"),
   wotwChannelId: requireEnv("WOTW_CHANNEL_ID"),
+  wotwAdminChannelId: requireEnv("WOTW_ADMIN_CHANNEL_ID"),
   databaseUrl,
   databaseSsl: shouldUseDatabaseSsl(databaseUrl),
   guessCooldownMs: readCooldownMs(),

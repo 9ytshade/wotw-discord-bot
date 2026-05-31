@@ -1,7 +1,7 @@
 import type { Client } from "discord.js";
 import { config } from "../config/config";
 import type { BotCommand, CommandContext } from "../types";
-import { getWotwTextChannel, sendGameEndMessages } from "../utils/sendGameEndMessages";
+import { sendGameEndReports } from "../utils/sendGameEndMessages";
 
 export function registerReadyEvent(client: Client, commands: BotCommand[], context: CommandContext): void {
   client.once("clientReady", () => {
@@ -32,8 +32,7 @@ async function initializeBot(client: Client, commands: BotCommand[], context: Co
 
   const recoveredSnapshot = await context.gameService.endIfWinnerLimitReached();
   if (recoveredSnapshot) {
-    const channel = await getWotwTextChannel(client);
-    await sendGameEndMessages(channel, recoveredSnapshot);
+    await sendGameEndReports(client, recoveredSnapshot);
     console.log(`Auto-ended recovered WOTW game #${recoveredSnapshot.game.id}.`);
   }
 }

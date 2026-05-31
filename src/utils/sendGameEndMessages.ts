@@ -1,7 +1,7 @@
 import type { Client, MessageCreateOptions } from "discord.js";
 import { config } from "../config/config";
 import type { EndedGameSnapshot } from "../types";
-import { formatGameEndMessages } from "./leaderboard";
+import { formatAdminGameEndMessages, formatPublicGameEndMessages } from "./leaderboard";
 
 export interface SendableTextChannel {
   send(options: MessageCreateOptions): Promise<unknown>;
@@ -14,20 +14,39 @@ export function isSendableTextChannel(channel: unknown): channel is SendableText
     && typeof (channel as { send?: unknown }).send === "function";
 }
 
-export async function getWotwTextChannel(client: Client): Promise<SendableTextChannel> {
-  const channel = await client.channels.fetch(config.wotwChannelId);
+async function getSendableTextChannel(client: Client, channelId: string, environmentVariable: string): Promise<SendableTextChannel> {
+  const channel = await client.channels.fetch(channelId);
   if (!channel?.isTextBased() || !isSendableTextChannel(channel)) {
-    throw new Error("Configured WOTW_CHANNEL_ID is not a sendable text channel.");
+    throw new Error(`Configured ${environmentVariable} is not a sendable text channel.`);
   }
   return channel;
 }
 
-export async function sendGameEndMessages(channel: SendableTextChannel, snapshot: EndedGameSnapshot): Promise<void> {
-  const messages = formatGameEndMessages(snapshot);
+export async function getWotwTextChannel(client: Client): Promise<SendableTextChannel> {
+  return getSendableTextChannel(client, config.wotwChannelId, "WOTW_CHANNEL_ID");
+}
+
+export async function getWotwAdminTextChannel(client: Client): Promise<SendableTextChannel> {
+  return getSendableTextChannel(client, config.wotwAdminChannelId, "WOTW_ADMIN_CHANNEL_ID");
+}
+
+async function sendMessages(channel: SendableTextChannel, messages: string[]): Promise<void> {
   for (const content of messages) {
     await channel.send({
       content,
       allowedMentions: { parse: [] }
     });
   }
+}
+
+export async function sendGameEndReports(
+  client: Client,
+  snapshot: EndedGameSnapshot,
+  publicChannel?: SendableTextChannel
+): Promise<void> {
+  const wotwChannel = publicChannel ?? await getWotwTextChannel(client);
+  const adminChannel = await getWotwAdminTextChannel(client);
+
+  await sendMessages(wotwChannel, formatPublicGameEndMessages(snapshot));
+  await sendMessages(adminChannel, formatAdminGameEndMessages(snapshot));
 }
