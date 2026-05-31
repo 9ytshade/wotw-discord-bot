@@ -18,7 +18,7 @@ function xpForRank(rank: number): number {
 }
 
 function winnerLine(winner: Winner): string {
-  return `${medalForRank(winner.rank)} ${winner.rank}. <@${winner.userId}> - ${xpForRank(winner.rank)} XP`;
+  return `${medalForRank(winner.rank)} @${winner.username} - ${xpForRank(winner.rank)} XP`;
 }
 
 function participantLine(participant: Participant): string {
