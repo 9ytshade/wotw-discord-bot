@@ -25,25 +25,34 @@ export const wotwStatusCommand: BotCommand = {
       return;
     }
 
-    const status = await context.gameService.getActiveGameStatus();
-    if (!status) {
-      await interaction.reply({ content: "There is no active WOTW game.", ephemeral: true });
-      return;
-    }
+    try {
+      const status = await context.gameService.getActiveGameStatus();
+      if (!status) {
+        await interaction.reply({ content: "There is no active WOTW game.", ephemeral: true });
+        return;
+      }
 
-    await interaction.reply({
-      ephemeral: true,
-      content: [
-        `Game: #${status.game.id}`,
-        `Answer: ${status.game.answer}`,
-        `Max Winners: ${status.game.maxWinners}`,
-        `Participants: ${status.participants.length}`,
-        `Winners: ${status.winners.length}`,
-        `Total Guesses: ${status.totalGuesses}`,
-        "",
-        "Recent Guesses:",
-        formatRecentGuesses(status)
-      ].join("\n")
-    });
+      await interaction.reply({
+        ephemeral: true,
+        content: [
+          `Game: #${status.game.id}`,
+          `Answer: ${status.game.answer}`,
+          `Max Winners: ${status.game.maxWinners}`,
+          `Participants: ${status.participants.length}`,
+          `Winners: ${status.winners.length}`,
+          `Total Guesses: ${status.totalGuesses}`,
+          "",
+          "Recent Guesses:",
+          formatRecentGuesses(status)
+        ].join("\n")
+      });
+    } catch (error) {
+      console.error("Failed to retrieve WOTW status:", error);
+      const message = error instanceof Error ? error.message : "Unknown database error.";
+      await interaction.reply({
+        content: `Unable to retrieve WOTW status: ${message}`,
+        ephemeral: true
+      });
+    }
   }
 };

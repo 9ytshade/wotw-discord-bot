@@ -138,6 +138,11 @@ export class GameService {
 
     const cooldownKey = `${active.id}:${message.author.id}`;
     const now = Date.now();
+    if (message.content.includes("\n") || message.content.includes("\r")) {
+      console.log(`[wotw] Rejected multi-line guess: game=${active.id} user=${message.author.id}`);
+      return null;
+    }
+
     const normalizedContent = normalizeGuess(message.content);
     if (!normalizedContent) {
       console.warn("[wotw] Ignored empty message content. Check Discord Message Content Intent if guesses are not being recorded.");
