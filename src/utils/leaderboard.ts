@@ -67,17 +67,26 @@ function chunkParticipantList(header: string, participants: Participant[], conti
 }
 
 export function formatPublicGameEndMessages(snapshot: EndedGameSnapshot): string[] {
+  const winnerLabel = snapshot.game.maxWinners === 1 ? "winner" : "winners";
+  const participantLabel = snapshot.game.maxWinners === 1 ? "participant" : "participants";
+  const winnerTitle = snapshot.game.maxWinners === 1 ? "Winner" : "Winners";
+
   return [[
     "\u{1F389} WORD OF THE WEEK HAS ENDED",
     "",
-    "Congratulations to everyone who participated!",
-    "Thank you for playing. Keep an eye out for the next Word of the Week.",
+    "Thank you to everyone who participated in this week's Word of the Week. It was great to see so many community members join the challenge.",
+    "",
+    `We already have our ${snapshot.game.maxWinners} ${winnerLabel}, the first ${snapshot.game.maxWinners} ${participantLabel} who submitted the correct answer.`,
     "",
     "\u{1F4CA} GAME STATS",
     "",
-    `Total Participants: ${snapshot.participants.length}`,
-    `Total Guesses: ${snapshot.totalGuesses}`,
-    `Game Duration: ${gameDuration(snapshot.game.startedAt, snapshot.game.endedAt)}`
+    `- Total Participants: ${snapshot.participants.length}`,
+    `- Total Guesses: ${snapshot.totalGuesses}`,
+    `- Time Taken to Find ${snapshot.game.maxWinners} ${winnerTitle}: ${gameDuration(snapshot.game.startedAt, snapshot.game.endedAt)}`,
+    "",
+    "\u{1F3C6} The winner announcement will be posted in the #\u{1F5E3}\u{FE0F}\u{2502}community-updates channel within the next 2 to 15 minutes, so stay tuned.",
+    "",
+    "Thank you all for playing, and we'll see you in the next Word of the Week!"
   ].join("\n")];
 }
 
