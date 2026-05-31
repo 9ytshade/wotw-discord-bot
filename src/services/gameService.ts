@@ -1,7 +1,7 @@
 import type { Pool, PoolClient } from "pg";
 import type { Message } from "discord.js";
 import { normalizeGuess } from "../utils/normalize";
-import type { EndedGameSnapshot, Game, Participant, Winner } from "../types";
+import type { ActiveGameStatus, EndedGameSnapshot, Game, Guess, Participant, Winner } from "../types";
 
 interface GameRow {
   id: string | number;
@@ -27,6 +27,15 @@ interface WinnerRow {
   user_id: string;
   username: string;
   rank: number;
+  guessed_at: Date | string;
+}
+
+interface GuessRow {
+  id: string | number;
+  game_id: string | number;
+  user_id: string;
+  username: string;
+  content: string;
   guessed_at: Date | string;
 }
 
@@ -131,15 +140,20 @@ export class GameService {
     const now = Date.now();
     const normalizedContent = normalizeGuess(message.content);
     if (!normalizedContent) {
+      console.warn("[wotw] Ignored empty message content. Check Discord Message Content Intent if guesses are not being recorded.");
       return null;
     }
 
     const lastGuessAt = this.cache.cooldowns.get(cooldownKey);
     const isCorrect = normalizedContent === active.answer;
     if (!isCorrect && lastGuessAt !== undefined && now - lastGuessAt < this.cooldownMs) {
+      console.log(`[wotw] Cooldown skip: game=${active.id} user=${message.author.id}`);
       return null;
     }
     this.cache.cooldowns.set(cooldownKey, now);
+    if (isCorrect) {
+      console.log(`[wotw] Correct guess detected: game=${active.id} user=${message.author.id}`);
+    }
 
     const username = message.member?.displayName ?? message.author.username;
     const transactionResult = await this.withTransaction(async (client) => {
@@ -193,6 +207,7 @@ export class GameService {
         `,
         [active.id, message.author.id, username, rank]
       );
+      console.log(`[wotw] Winner recorded: game=${active.id} user=${message.author.id} rank=${rank}`);
 
       return {
         won: true,
@@ -253,6 +268,28 @@ export class GameService {
     return this.endActiveGame();
   }
 
+  public async getActiveGameStatus(): Promise<ActiveGameStatus | undefined> {
+    const active = await this.getActiveGame();
+    if (!active) {
+      return undefined;
+    }
+
+    const [participants, winners, totalGuesses, recentGuesses] = await Promise.all([
+      this.getParticipants(active.id),
+      this.getWinners(active.id),
+      this.getTotalGuesses(active.id),
+      this.getRecentGuesses(active.id, 10)
+    ]);
+
+    return {
+      game: active,
+      participants,
+      winners,
+      totalGuesses,
+      recentGuesses
+    };
+  }
+
   private async getGameSnapshot(game: Game): Promise<EndedGameSnapshot> {
     const [participants, winners, totalGuesses] = await Promise.all([
       this.getParticipants(game.id),
@@ -284,6 +321,14 @@ export class GameService {
       [gameId]
     );
     return Number(result.rows[0]?.total ?? 0);
+  }
+
+  private async getRecentGuesses(gameId: number, limit: number): Promise<Guess[]> {
+    const result = await this.db.query<GuessRow>(
+      "SELECT * FROM guesses WHERE game_id = $1 ORDER BY guessed_at DESC, id DESC LIMIT $2",
+      [gameId, limit]
+    );
+    return result.rows.map(this.mapGuess);
   }
 
   private async withTransaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -330,6 +375,17 @@ export class GameService {
       userId: row.user_id,
       username: row.username,
       rank: row.rank,
+      guessedAt: this.formatTimestamp(row.guessed_at)
+    };
+  }
+
+  private mapGuess(row: GuessRow): Guess {
+    return {
+      id: Number(row.id),
+      gameId: Number(row.game_id),
+      userId: row.user_id,
+      username: row.username,
+      content: row.content,
       guessedAt: this.formatTimestamp(row.guessed_at)
     };
   }

@@ -39,9 +39,26 @@ export interface Winner {
   guessedAt: string;
 }
 
+export interface Guess {
+  id: number;
+  gameId: number;
+  userId: string;
+  username: string;
+  content: string;
+  guessedAt: string;
+}
+
 export interface EndedGameSnapshot {
   game: Game;
   winners: Winner[];
   participants: Participant[];
   totalGuesses: number;
+}
+
+export interface ActiveGameStatus {
+  game: Game;
+  winners: Winner[];
+  participants: Participant[];
+  totalGuesses: number;
+  recentGuesses: Guess[];
 }
