@@ -33,6 +33,7 @@ Prerequisite: Node.js 24 or newer.
    GUILD_ID=
    WOTW_CHANNEL_ID=
    WOTW_ADMIN_CHANNEL_ID=
+   WOTW_ANNOUNCEMENT_CHANNEL_ID=
    DATABASE_URL=postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres
    GUESS_COOLDOWN_SECONDS=3
    PORT=3000
@@ -97,6 +98,7 @@ This repo includes `render.yaml`, so you can deploy it as a Render web service.
    GUILD_ID=
    WOTW_CHANNEL_ID=
    WOTW_ADMIN_CHANNEL_ID=
+   WOTW_ANNOUNCEMENT_CHANNEL_ID=
    DATABASE_URL=
    GUESS_COOLDOWN_SECONDS=3
    ```

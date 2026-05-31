@@ -19,6 +19,8 @@ services:
         sync: false
       - key: WOTW_ADMIN_CHANNEL_ID
         sync: false
+      - key: WOTW_ANNOUNCEMENT_CHANNEL_ID
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: GUESS_COOLDOWN_SECONDS
