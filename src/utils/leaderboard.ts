@@ -6,18 +6,42 @@ function medalForRank(rank: number): string {
   if (rank === 1) return "\u{1F947}";
   if (rank === 2) return "\u{1F948}";
   if (rank === 3) return "\u{1F949}";
-  return `${rank}.`;
+  return "\u{1F3C5}";
+}
+
+function xpForRank(rank: number): number {
+  if (rank === 1) return 600;
+  if (rank === 2) return 400;
+  if (rank === 3) return 300;
+  if (rank === 4) return 200;
+  return 150;
 }
 
 function winnerLine(winner: Winner): string {
-  if (winner.rank <= 3) {
-    return `${medalForRank(winner.rank)} ${winner.rank}. <@${winner.userId}>`;
-  }
-  return `${winner.rank}. <@${winner.userId}>`;
+  return `${medalForRank(winner.rank)} ${winner.rank}. <@${winner.userId}> - ${xpForRank(winner.rank)} XP`;
 }
 
 function participantLine(participant: Participant): string {
-  return `@${participant.username}`;
+  return `@${participant.username} - 100 XP`;
+}
+
+function gameDuration(startedAt: string, endedAt: string | null): string {
+  if (!endedAt) {
+    return "Unknown";
+  }
+
+  const durationMs = Math.max(0, new Date(endedAt).getTime() - new Date(startedAt).getTime());
+  const totalSeconds = Math.floor(durationMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts: string[] = [];
+
+  if (hours > 0) parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+  if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? "minute" : "minutes"}`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds} ${seconds === 1 ? "second" : "seconds"}`);
+
+  return parts.join(" ");
 }
 
 function chunkParticipantList(header: string, participants: Participant[], continuedHeading: string): string[] {
@@ -43,7 +67,7 @@ function chunkParticipantList(header: string, participants: Participant[], conti
 }
 
 export function formatPublicGameEndMessages(snapshot: EndedGameSnapshot): string[] {
-  const header = [
+  return [[
     "\u{1F389} WORD OF THE WEEK HAS ENDED",
     "",
     "Congratulations to everyone who participated!",
@@ -51,13 +75,10 @@ export function formatPublicGameEndMessages(snapshot: EndedGameSnapshot): string
     "",
     "\u{1F4CA} GAME STATS",
     "",
+    `Total Participants: ${snapshot.participants.length}`,
     `Total Guesses: ${snapshot.totalGuesses}`,
-    "",
-    "\u{1F9E0} PARTICIPANTS",
-    ""
-  ].join("\n");
-
-  return chunkParticipantList(header, snapshot.participants, "\u{1F9E0} PARTICIPANTS (continued)");
+    `Game Duration: ${gameDuration(snapshot.game.startedAt, snapshot.game.endedAt)}`
+  ].join("\n")];
 }
 
 export function formatAdminGameEndMessages(snapshot: EndedGameSnapshot): string[] {
@@ -81,6 +102,7 @@ export function formatAdminGameEndMessages(snapshot: EndedGameSnapshot): string[
     "",
     `Total Participants: ${snapshot.participants.length}`,
     `Total Guesses: ${snapshot.totalGuesses}`,
+    `Game Duration: ${gameDuration(snapshot.game.startedAt, snapshot.game.endedAt)}`,
     "",
     "\u{1F9E0} PARTICIPANTS (NON-WINNERS)",
     ""
