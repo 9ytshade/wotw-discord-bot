@@ -129,14 +129,19 @@ export class GameService {
 
     const cooldownKey = `${active.id}:${message.author.id}`;
     const now = Date.now();
+    const normalizedContent = normalizeGuess(message.content);
+    if (!normalizedContent) {
+      return null;
+    }
+
     const lastGuessAt = this.cache.cooldowns.get(cooldownKey);
-    if (lastGuessAt !== undefined && now - lastGuessAt < this.cooldownMs) {
+    const isCorrect = normalizedContent === active.answer;
+    if (!isCorrect && lastGuessAt !== undefined && now - lastGuessAt < this.cooldownMs) {
       return null;
     }
     this.cache.cooldowns.set(cooldownKey, now);
 
     const username = message.member?.displayName ?? message.author.username;
-    const normalizedContent = normalizeGuess(message.content);
     const transactionResult = await this.withTransaction(async (client) => {
       await client.query(
         `
@@ -157,7 +162,6 @@ export class GameService {
         [active.id, message.author.id, username]
       );
 
-      const isCorrect = normalizedContent === active.answer;
       if (!isCorrect) {
         return { won: false, shouldEnd: false, rank: null as number | null };
       }
