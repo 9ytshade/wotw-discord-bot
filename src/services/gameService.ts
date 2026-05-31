@@ -309,7 +309,7 @@ export class GameService {
       "SELECT * FROM participants WHERE game_id = $1 ORDER BY first_guess_at ASC, id ASC",
       [gameId]
     );
-    return result.rows.map(this.mapParticipant);
+    return result.rows.map((row) => this.mapParticipant(row));
   }
 
   private async getWinners(gameId: number): Promise<Winner[]> {
@@ -317,7 +317,7 @@ export class GameService {
       "SELECT * FROM winners WHERE game_id = $1 ORDER BY rank ASC",
       [gameId]
     );
-    return result.rows.map(this.mapWinner);
+    return result.rows.map((row) => this.mapWinner(row));
   }
 
   private async getTotalGuesses(gameId: number): Promise<number> {
@@ -333,7 +333,7 @@ export class GameService {
       "SELECT * FROM guesses WHERE game_id = $1 ORDER BY guessed_at DESC, id DESC LIMIT $2",
       [gameId, limit]
     );
-    return result.rows.map(this.mapGuess);
+    return result.rows.map((row) => this.mapGuess(row));
   }
 
   private async withTransaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
