@@ -1,0 +1,524 @@
+# WOTW Discord Bot — Full Build Specification
+
+## Project Overview
+
+Build a Discord bot for a “Word of the Week” (WOTW) game system.
+
+The bot will monitor a dedicated WOTW channel and track:
+
+* The first 10 users to correctly guess the active word
+* All users who participated during the game
+* Guess timestamps
+* Winner rankings
+* Total guesses
+
+The game automatically ends once 10 correct winners are recorded.
+
+The bot must support persistent storage so game data survives bot restarts.
+
+---
+
+# Core Game Logic
+
+## Game Flow
+
+1. Admin starts a WOTW game
+2. Community clue/hint is posted manually in announcement channels
+3. Users submit guesses in the WOTW channel
+4. Bot validates guesses against the active answer
+5. Bot records:
+
+   * participants
+   * winners
+   * timestamps
+6. Once 10 winners are reached:
+
+   * game ends automatically
+   * leaderboard is posted
+   * stats are archived
+
+## Silent Monitoring Requirement
+
+After a game starts, the bot must remain completely silent until the game ends.
+
+The bot should NOT:
+
+* reply to guesses
+* confirm correct answers
+* react to messages
+* announce winners in real time
+* expose rankings during gameplay
+
+All guess validation and tracking must happen entirely in the background.
+
+This is critical to prevent:
+
+* exposing the correct answer
+* users copying correct guesses
+* timestamp manipulation
+* unfair gameplay advantages
+
+---
+
+# Updated Gameplay Logic
+
+## During Active Game
+
+Bot silently monitors:
+
+* all guesses
+* all participants
+* correct answers
+* winner rankings
+
+No visible response is sent to the Discord channel.
+
+---
+
+# Correct Guess Handling
+
+When a user guesses correctly:
+
+The bot should:
+
+* silently record the winner
+* assign rank internally
+* continue monitoring
+
+The channel should show no indication that the answer was correct.
+
+---
+
+# Auto-End Trigger
+
+Once the winner count reaches the configured limit (default: 10):
+
+The bot:
+
+1. Ends the game
+2. Stops monitoring guesses
+3. Posts final results publicly
+
+---
+
+# Updated End Game Message
+
+The final message must include:
+
+* Winners leaderboard
+* Total participants
+* Total guesses
+* Full participant username list
+
+Example:
+
+```txt id="dq4x0s"
+🎉 WORD OF THE WEEK ENDED
+
+ANSWER:
+NEXURA
+
+━━━━━━━━━━━━━━
+
+🏆 WINNERS
+
+🥇 1. @User1
+🥈 2. @User2
+🥉 3. @User3
+4. @User4
+...
+10. @User10
+
+━━━━━━━━━━━━━━
+
+📊 GAME STATS
+
+Total Participants: 184
+Total Guesses: 643
+
+━━━━━━━━━━━━━━
+
+🧠 PARTICIPANTS
+
+@UserA
+@UserB
+@UserC
+...
+```
+
+---
+
+# Important Tracking Rules
+
+## Participant Rules
+
+A participant is any user who submitted at least one guess during the active game.
+
+Even incorrect guesses count.
+
+Participants should only appear once in the participant list.
+
+---
+
+# Winner Rules
+
+A winner:
+
+* must have guessed the correct answer
+* is ranked based on timestamp order
+* can only win once
+
+---
+
+# Performance Requirement
+
+Because the bot will silently process every message in the WOTW channel, optimize for:
+
+* fast answer comparison
+* efficient database writes
+* duplicate prevention
+* cooldown handling
+
+---
+
+# Additional Recommendation
+
+Implement a lightweight in-memory cache during gameplay for:
+
+* participant existence checks
+* winner existence checks
+
+But always persist to database immediately afterward.
+
+The database remains the source of truth.
+
+
+---
+
+# Technical Stack
+
+## Language
+
+TypeScript preferred
+
+## Framework
+
+discord.js v14
+
+## Database
+
+Use SQLite for initial version
+
+Recommended ORM:
+
+* Prisma
+  OR
+* better-sqlite3
+
+---
+
+# Required Features
+
+## 1. Start Game Command
+
+Admin-only slash command:
+
+```bash
+/startwotw
+```
+
+Parameters:
+
+* answer (required)
+* maxWinners (optional, default = 10)
+
+Example:
+
+```bash
+/startwotw answer:NEXURA
+```
+
+Behavior:
+
+* Creates active game
+* Stores answer normalized to lowercase
+* Initializes empty:
+
+  * participants
+  * winners
+  * guesses
+
+---
+
+## 2. End Game Command
+
+```bash
+/endwotw
+```
+
+Admin-only.
+
+Behavior:
+
+* Ends active game
+* Posts final leaderboard
+* Archives stats
+
+---
+
+## 3. Message Monitoring
+
+Bot listens only inside configured WOTW channel.
+
+For every message:
+
+* ignore bots
+* normalize content:
+
+  * trim spaces
+  * lowercase
+* compare against active answer
+
+Example valid matches:
+
+* nexura
+* NEXURA
+* Nexura
+
+---
+
+# Participant Tracking
+
+Every unique user who sends at least one guess is recorded as a participant.
+
+Store:
+
+* userId
+* username
+* firstGuessTimestamp
+* totalGuesses
+
+Wrong guesses still count as participation.
+
+---
+
+# Winner Tracking
+
+When a correct guess is received:
+
+Checks:
+
+* user not already winner
+* winner slots not full
+
+If valid:
+
+* assign winner rank
+* record timestamp
+* store winner
+
+Example:
+1st place
+2nd place
+3rd place
+
+etc.
+
+---
+
+# Auto-End Logic
+
+When winners.length >= maxWinners:
+
+* mark game inactive
+* stop accepting guesses
+* post results embed
+
+---
+
+# Required Database Models
+
+## Game
+
+Fields:
+
+* id
+* answer
+* status
+* startedAt
+* endedAt
+* maxWinners
+
+---
+
+## Participant
+
+Fields:
+
+* id
+* gameId
+* userId
+* username
+* totalGuesses
+* firstGuessAt
+
+---
+
+## Winner
+
+Fields:
+
+* id
+* gameId
+* userId
+* username
+* rank
+* guessedAt
+
+---
+
+# Discord Responses
+
+## Correct Guess
+
+Example:
+
+```txt
+✅ @user got the word correct!
+Rank: #3
+```
+
+---
+
+## Game End Message
+
+Example:
+
+```txt
+🎉 WORD OF THE WEEK ENDED
+
+Winners:
+🥇 @User1
+🥈 @User2
+🥉 @User3
+...
+
+Total Participants: 184
+Total Guesses: 643
+```
+
+---
+
+# Suggested Folder Structure
+
+```txt
+src/
+├── commands/
+│   ├── startwotw.ts
+│   └── endwotw.ts
+│
+├── events/
+│   ├── ready.ts
+│   └── messageCreate.ts
+│
+├── database/
+│   ├── prisma/
+│   └── client.ts
+│
+├── services/
+│   ├── gameService.ts
+│   ├── participantService.ts
+│   └── winnerService.ts
+│
+├── utils/
+│   ├── normalize.ts
+│   └── leaderboard.ts
+│
+├── config/
+│   └── config.ts
+│
+└── index.ts
+```
+
+---
+
+# Important Requirements
+
+## Persistent Storage
+
+Game state MUST survive:
+
+* crashes
+* redeployments
+* restarts
+
+Never store active state only in memory.
+
+---
+
+## Anti-Spam Protection
+
+Implement:
+
+* per-user cooldown
+* recommended: 3–5 seconds
+
+---
+
+## Security
+
+Only admins can:
+
+* start games
+* end games
+
+---
+
+# Future Expansion Support
+
+Codebase should be modular enough to support later additions:
+
+* XP system
+* Seasonal rankings
+* NFT rewards
+* Hint automation
+* User profiles
+* Streak tracking
+* Web dashboard
+* API integration
+* Role rewards
+
+---
+
+# Environment Variables
+
+```env
+DISCORD_TOKEN=
+CLIENT_ID=
+GUILD_ID=
+WOTW_CHANNEL_ID=
+DATABASE_URL=
+```
+
+---
+
+# Deliverables
+
+Codex should generate:
+
+1. Fully working Discord bot
+2. Slash commands
+3. SQLite integration
+4. Persistent game system
+5. Winner tracking
+6. Participant tracking
+7. Auto-end functionality
+8. Clean modular architecture
+9. README with setup instructions
+10. Example `.env`
+
+---
+
+# Expected Outcome
+
+A production-ready Discord WOTW bot that can reliably manage recurring community word games with persistent tracking, leaderboard generation, and automated winner handling.

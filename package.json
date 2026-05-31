@@ -1,0 +1,36 @@
+{
+  "name": "wotw-discord-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for silent Word of the Week games with persistent Supabase Postgres tracking.",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:restart": "pm2 restart wotw-discord-bot",
+    "pm2:logs": "pm2 logs wotw-discord-bot",
+    "pm2:stop": "pm2 stop wotw-discord-bot"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "word-of-the-week"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.19.3",
+    "dotenv": "^16.5.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.2",
+    "pm2": "^5.4.3",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
